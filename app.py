@@ -20,7 +20,6 @@ STORAGE_FILE = "ai_responses.json"
 
 id = 1
 
-# Load environment variables
 load_dotenv()
 
 # Set API keys & configurations
@@ -31,14 +30,12 @@ GROQ_ENDPOINT = os.getenv("GROQ_ENDPOINT")
 # config.load_kube_config()
 # v1 = client.CoreV1Api()
 
-# FAISS Index (for Storing & Retrieving Logs)
 vector_dim = 384
 index = faiss.IndexFlatL2(vector_dim)
 log_texts = []
 log_data = []
 anomaly_logs = []
 
-# Enhanced Streamlit UI Setup
 st.set_page_config(
     page_title="Kubernetes Anomaly Detection Dashboard",
     page_icon="🚨",
@@ -46,7 +43,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional styling
 st.markdown("""
 <style>
     .main-header {
@@ -137,7 +133,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header Section
 st.markdown("""
 <div class="main-header">
     <h1>🚨 Kubernetes Anomaly Detection Dashboard</h1>
@@ -188,7 +183,6 @@ def fetch_live_k8s_logs():
     return logs
 
 
-# 📌 Extract Errors & Warnings (unchanged)
 def extract_errors_warnings(logs):
     error_patterns = [
         r'(?i)\b(error|failed|exception|crash|critical)\b',
@@ -221,44 +215,6 @@ def filter_anomalous_logs(all_logs):
         if category in ["Workflow Error", "Deprecation Warning"]:
             filtered.append(log)
     return filtered
-
-# # 📌 AI-Based Anomaly Detection (unchanged)
-# def detect_anomalies(logs):
-#     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-#
-#     if not logs:
-#         return "No logs available for anomaly detection."
-#
-#     max_logs = 150
-#     trimmed_logs = logs[:max_logs]
-#     logs_text = "\n".join([log["log"][:500] for log in trimmed_logs])
-#
-#     payload = {
-#         "model": "llama3-8b-8192",  # or whatever model you're using
-#         "messages": [
-#             {
-#                 "role": "system",
-#                 "content": (
-#                     "You are a highly accurate AI system that analyzes Kubernetes logs. "
-#                     "Your task is to identify all anomalies, and for each anomaly, list all the related or similar log lines. "
-#                     "Group the logs under each anomaly and give a short explanation for what might be causing it. "
-#                     "Focus on correlation: logs that repeat, follow patterns, or come from the same issue should be grouped together."
-#                 )
-#             },
-#             {
-#                 "role": "user",
-#                 "content": f"Analyze the following logs (showing {max_logs} entries):\n\n{logs_text}"
-#             }
-#         ],
-#         "max_tokens": 1000  # Increase if needed, but stay within Groq limits
-#     }
-#
-#     response = requests.post(GROQ_ENDPOINT, headers=headers, data=json.dumps(payload))
-#
-#     if response.status_code == 200:
-#         return response.json()["choices"][0]["message"]["content"]
-#     else:
-#         return f"Error: {response.json().get('error', {}).get('message', 'Unknown error')}"
 
 def detect_anomalies(filtered_logs):
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
@@ -295,7 +251,6 @@ def detect_anomalies(filtered_logs):
     else:
         return f"Error: {response.json().get('error', {}).get('message', 'Unknown error')}"
 
-# Enhanced Sidebar
 with st.sidebar:
     st.markdown("### 🔧 Dashboard Controls")
 
@@ -323,23 +278,18 @@ if st.sidebar.button("🗑️ Clear Stored AI Response"):
         os.remove(STORAGE_FILE)
         st.success("Cached AI response cleared. Reload to fetch new one.")
 
-# Main Content Area
 col1, col2 = st.columns([2, 1])
 
 with col2:
     st.markdown("### 📈 System Status")
 
-    # Fetch and process logs
     logs = fetch_live_k8s_logs()
-    #store_logs_as_vectors(logs)
     error_logs = extract_errors_warnings(logs)
 
-    # Status Indicators
     total_logs = len(logs)
     error_count = len(error_logs)
     healthy_logs = total_logs - error_count
 
-    # Status based on error ratio
     if error_count == 0:
         status = "healthy"
         status_color = "status-healthy"
@@ -360,7 +310,6 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
-    # Metrics
     col_a, col_b = st.columns(2)
     with col_a:
         st.metric("Total Logs", total_logs, delta=None)
@@ -369,7 +318,6 @@ with col2:
 
     st.metric("Healthy Logs", healthy_logs, delta=None)
 
-# Main Dashboard Content
 st.markdown("---")
 
 def save_ai_response(response_text):
@@ -388,11 +336,10 @@ def save_ai_response(response_text):
             except json.JSONDecodeError:
                 existing = []
 
-    # Assign index: max(existing.indexes) + 1
     max_index = max((item.get("index", 0) for item in existing), default=0) + 1
     entry["index"] = max_index
 
-    existing.insert(0, entry)  # newest first
+    existing.insert(0, entry)  
     with open(STORAGE_FILE, "w") as f:
         json.dump(existing, f, indent=2)
 
@@ -404,21 +351,9 @@ def load_all_saved_responses():
             return json.load(f)
     return []
 
-# Anomaly Detection Section
 st.markdown("### 🚨 Anomaly Detection")
 
 cached_response = load_all_saved_responses()
-
-# Only call Groq if not cached or you want to force refresh
-# if cached_response:
-#     st.markdown("🧠 Using previously stored AI anomaly analysis:")
-#     latest_response = cached_response[0]  # get most recent
-#     anomaly_logs = latest_response["response"]
-# else:
-#     with st.spinner("🔍 Detecting anomalies..."):
-#         anomaly_logs = detect_anomalies(logs)
-#         if not anomaly_logs.startswith("Error:"):
-#             save_ai_response(anomaly_logs)
 
 with st.spinner("🔍 Detecting anomalies..."):
     anomaly_logs = detect_anomalies(logs)
@@ -429,7 +364,6 @@ with st.spinner("🔍 Detecting anomalies..."):
     else:
         st.error(anomaly_logs)
 
-# Show result
 if "Error:" in str(anomaly_logs):
     st.markdown(f'<div class="error-box"><strong>⚠️ AI Service Error:</strong><br>{anomaly_logs}</div>',
                 unsafe_allow_html=True)
@@ -460,19 +394,16 @@ display_logs = logs
 if filter_errors_only:
     display_logs = error_logs
 
-if pod_filter:  # renamed from namespace_filter for clarity
+if pod_filter: 
     display_logs = [log for log in display_logs if pod_filter.lower() in log['pod'].lower()]
 
 
-# Limit displayed logs
 display_logs = display_logs[:max_logs_display]
 
 if display_logs:
-    # Create DataFrame with better formatting
     df = pd.DataFrame(display_logs)
 
 
-    # Add status column based on log content
     def get_log_status(log_text):
         error_patterns = [r'(?i)\b(error|failed|exception|crash|critical)\b']
         if any(re.search(pattern, log_text) for pattern in error_patterns):
@@ -485,13 +416,11 @@ if display_logs:
 
     df['Status'] = df['log'].apply(get_log_status)
 
-    # Reorder columns
     if show_timestamps:
         df = df[['Status', 'timestamp', 'pod', 'namespace', 'log']]
     else:
         df = df[['Status', 'pod', 'namespace', 'log']]
 
-    # Display with custom styling
     st.dataframe(
         df,
         use_container_width=True,
@@ -508,7 +437,6 @@ else:
     st.markdown('<div class="alert-box">📋 <strong>No logs to display</strong> based on current filters.</div>',
                 unsafe_allow_html=True)
 
-# Footer with auto-refresh
 if auto_refresh:
     st.markdown("---")
     st.markdown(f"🔄 **Auto-refresh enabled** - Next update in {refresh_interval} seconds")

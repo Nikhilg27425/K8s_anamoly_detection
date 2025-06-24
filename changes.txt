@@ -1,9 +1,0 @@
-implement on live logs
-
-
-Implement sliding window (keep last 1000 logs)
-Add log sampling (keep all errors, sample 20% of normal logs)
-Batch the AI analysis (process 50 logs at a time)
-Add pagination to the UI
-
-

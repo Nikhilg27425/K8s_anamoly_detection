@@ -2,8 +2,13 @@ from groq import Groq
 import json
 import re
 
-api_key = "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"
-groq = Groq(api_key=api_key)  # Correct way to instantiate the client
+api_key = os.getenv("GROQ_API_KEY") 
+
+if not api_key:
+    raise ValueError("GROQ_API_KEY environment variable not set")
+
+groq = Groq(api_key=api_key)  
+
 
 def classify_with_llm(log_msg):
     prompt = f'''Classify the log message into one of these categories: 

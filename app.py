@@ -21,8 +21,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_ENDPOINT = os.getenv("GROQ_ENDPOINT")
 
 #Load Kubernetes configuration
-# config.load_kube_config()
-# v1 = client.CoreV1Api()
+config.load_kube_config()
+v1 = client.CoreV1Api()
 
 # Enhanced Streamlit UI Setup
 st.set_page_config(

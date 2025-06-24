@@ -32,7 +32,7 @@ This project implements a two-stage anomaly detection pipeline:
 
 1. Clone the repository:
 ```bash
-git clone [(https://github.com/Nikhilg27425/K8s_anamoly_detection)]
+git clone https://github.com/Nikhilg27425/K8s_anamoly_detection
 cd K8s_anomaly_detection
 ```
 
